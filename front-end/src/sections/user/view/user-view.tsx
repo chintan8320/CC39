@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -20,44 +20,123 @@ import { UserTableRow } from '../user-table-row';
 import { UserTableHead } from '../user-table-head';
 import { TableEmptyRows } from '../table-empty-rows';
 import { UserTableToolbar } from '../user-table-toolbar';
-import { emptyRows, applyFilter, getComparator } from '../utils';
+import { emptyRows, applyFilter, getComparator, exportToExcel } from '../utils';
 
 import type { UserProps } from '../user-table-row';
+import { UserModal } from '../user-modal';
 
 // ----------------------------------------------------------------------
 
 export function UserView() {
   const table = useTable();
-
+  const [users, setUsers] = useState(_users);
+  const [total, setTotal] = useState(0);
   const [filterName, setFilterName] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProps | null>(null);
 
   const dataFiltered: UserProps[] = applyFilter({
-    inputData: _users,
+    inputData: users,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
 
   const notFound = !dataFiltered.length && !!filterName;
 
+  const handleOpenModal = (user?: UserProps) => {
+    setEditingUser(user || null);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
+  const handleSaveUser = (user: UserProps) => {
+    if (editingUser) {
+      editData(user, editingUser.id);
+    } else {
+      addData(user);
+    }
+  };
+
+  const fetchData = (page = 1, limit = 5) => {
+    fetch(`http://localhost:3333/api/users?page=${page}&limit=${limit}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setUsers(data.users);
+        setTotal(data.total);
+      })
+      .catch((error) => console.error('Error:', error));
+  };
+
+  const addData = (newUser: UserProps) => {
+    fetch('http://localhost:3333/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newUser),
+    })
+      .then((response) => response.json())
+      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
+      .catch((error) => console.error('Error:', error));
+  };
+
+  const editData = (newUser: UserProps, id: string) => {
+    fetch(`http://localhost:3333/api/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newUser),
+    })
+      .then((response) => response.json())
+      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
+      .catch((error) => console.error('Error:', error));
+  };
+
+  const deleteData = (id: string) => {
+    fetch(`http://localhost:3333/api/users/${id}`, {
+      method: 'DELETE',
+    })
+      .then((response) => response.json())
+      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
+      .catch((error) => console.error('Error:', error));
+  };
+
+  useEffect(() => {
+    fetchData(table.page + 1, table.rowsPerPage);
+  }, [table.page, table.rowsPerPage]);
+
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
-        <Typography variant="h4" flexGrow={1}>
+        <Typography variant="h4" flexGrow={1} textAlign="left">
           Users
         </Typography>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-        >
-          New user
-        </Button>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={() => handleOpenModal()}
+          >
+            New User
+          </Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mdi:file-excel" />}
+            onClick={() => exportToExcel()}
+          >
+            Export as Excel
+          </Button>
+        </Box>
       </Box>
 
       <Card>
-        <UserTableToolbar
-          numSelected={table.selected.length}
-        />
+        <UserTableToolbar numSelected={table.selected.length} />
 
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
@@ -71,7 +150,7 @@ export function UserView() {
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    _users.map((user) => user.id)
+                    _users.map((user: any) => user.id)
                   )
                 }
                 headLabel={[
@@ -84,19 +163,16 @@ export function UserView() {
                 ]}
               />
               <TableBody>
-                {dataFiltered
-                  .slice(
-                    table.page * table.rowsPerPage,
-                    table.page * table.rowsPerPage + table.rowsPerPage
-                  )
-                  .map((row) => (
-                    <UserTableRow
-                      key={row.id}
-                      row={row}
-                      selected={table.selected.includes(row.id)}
-                      onSelectRow={() => table.onSelectRow(row.id)}
-                    />
-                  ))}
+                {users.map((row: any) => (
+                  <UserTableRow
+                    key={row.id ?? ''}
+                    row={row}
+                    selected={table.selected.includes(row.id ?? '')}
+                    onSelectRow={() => row.id && table.onSelectRow(row.id)}
+                    handleOpenModal={handleOpenModal}
+                    deleteData={deleteData}
+                  />
+                ))}
 
                 <TableEmptyRows
                   height={68}
@@ -112,13 +188,19 @@ export function UserView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={_users.length}
+          count={total}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
+      <UserModal
+        open={openModal}
+        onClose={handleCloseModal}
+        onSave={handleSaveUser}
+        editingUser={editingUser}
+      />
     </DashboardContent>
   );
 }

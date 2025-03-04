@@ -1,4 +1,6 @@
+import * as XLSX from "xlsx";
 import type { UserProps } from './user-table-row';
+
 
 // ----------------------------------------------------------------------
 
@@ -77,3 +79,23 @@ export function applyFilter({ inputData, comparator, filterName }: ApplyFilterPr
 
   return inputData;
 }
+
+export const exportToExcel = async () => {
+  try {
+    const response = await fetch("http://localhost:3333/api/users");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user data");
+    }
+    
+    const worksheet = XLSX.utils.json_to_sheet(data?.users);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+
+    XLSX.writeFile(workbook, "users_data.xlsx");
+
+  } catch (error) {
+    console.error("Error exporting data:", error);
+  }
+};
