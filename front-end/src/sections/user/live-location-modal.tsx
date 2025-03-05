@@ -31,7 +31,7 @@ export function LiveLocationModal({ open, onClose }: LiveLocationModalProps) {
     if (isTracking && open) {
       const fetchLocation = async () => {
         try {
-          const response = await fetch('http://localhost:3333/live-location');
+          const response = await fetch('https://cc39.onrender.com/live-location');
           if (!response.ok) {
             throw new Error('Failed to fetch location');
           }

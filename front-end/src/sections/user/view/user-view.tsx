@@ -85,7 +85,7 @@ export function UserView() {
 
   const fetchData = (page = 1, limit = 5) => {
     setIsLoading(true);
-    fetch(`http://localhost:3333/api/users?page=${page}&limit=${limit}`)
+    fetch(`https://cc39.onrender.com/api/users?page=${page}&limit=${limit}`)
       .then((response) => response.json())
       .then((data) => {
         setUsers(data.users);
@@ -100,7 +100,7 @@ export function UserView() {
   };
 
   const addData = (newUser: UserProps) => {
-    fetch('http://localhost:3333/api/users', {
+    fetch('https://cc39.onrender.com/api/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export function UserView() {
   };
 
   const editData = (newUser: UserProps, id: string) => {
-    fetch(`http://localhost:3333/api/users/${id}`, {
+    fetch(`https://cc39.onrender.com/api/users/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export function UserView() {
 
   const deleteData = (id: string) => {
     setIsLoading(true);
-    fetch(`http://localhost:3333/api/users/${id}`, {
+    fetch(`https://cc39.onrender.com/api/users/${id}`, {
       method: 'DELETE',
     })
       .then((response) => response.json())
