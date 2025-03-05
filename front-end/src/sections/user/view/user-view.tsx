@@ -8,6 +8,8 @@ import TableBody from '@mui/material/TableBody';
 import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 import { _users } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -28,6 +30,23 @@ import { LiveLocationModal } from '../live-location-modal';
 
 // ----------------------------------------------------------------------
 
+const Loader = () => (
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    height="100%" 
+    width="100%" 
+    position="absolute" 
+    top={0} 
+    left={0} 
+    bgcolor="rgba(255, 255, 255, 0.7)" 
+    zIndex={10}
+  >
+    <CircularProgress color="inherit"/>
+  </Box>
+);
+
 export function UserView() {
   const table = useTable();
   const [users, setUsers] = useState(_users);
@@ -36,6 +55,7 @@ export function UserView() {
   const [openModal, setOpenModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProps | null>(null);
   const [openLiveLocationModal, setOpenLiveLocationModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const dataFiltered: UserProps[] = applyFilter({
     inputData: users,
@@ -55,6 +75,7 @@ export function UserView() {
   };
 
   const handleSaveUser = (user: UserProps) => {
+    setIsLoading(true);
     if (editingUser) {
       editData(user, editingUser.id);
     } else {
@@ -63,13 +84,19 @@ export function UserView() {
   };
 
   const fetchData = (page = 1, limit = 5) => {
+    setIsLoading(true);
     fetch(`http://localhost:3333/api/users?page=${page}&limit=${limit}`)
       .then((response) => response.json())
       .then((data) => {
         setUsers(data.users);
         setTotal(data.total);
+        setIsLoading(false);
       })
-      .catch((error) => console.error('Error:', error));
+      .catch((error) => {
+        console.error('Error:', error);
+        // Set loading to false even if there's an error
+        setIsLoading(false);
+      });
   };
 
   const addData = (newUser: UserProps) => {
@@ -81,8 +108,12 @@ export function UserView() {
       body: JSON.stringify(newUser),
     })
       .then((response) => response.json())
-      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
-      .catch((error) => console.error('Error:', error));
+      .then((data) => {fetchData(table.page + 1, table.rowsPerPage); setIsLoading(false);})
+      .catch((error) => {
+        console.error('Error:', error);
+        // Set loading to false even if there's an error
+        setIsLoading(false);
+      });
   };
 
   const editData = (newUser: UserProps, id: string) => {
@@ -94,17 +125,26 @@ export function UserView() {
       body: JSON.stringify(newUser),
     })
       .then((response) => response.json())
-      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
-      .catch((error) => console.error('Error:', error));
+      .then((data) => {fetchData(table.page + 1, table.rowsPerPage); setIsLoading(false);})
+      .catch((error) => {
+        console.error('Error:', error);
+        // Set loading to false even if there's an error
+        setIsLoading(false);
+      });
   };
 
   const deleteData = (id: string) => {
+    setIsLoading(true);
     fetch(`http://localhost:3333/api/users/${id}`, {
       method: 'DELETE',
     })
       .then((response) => response.json())
-      .then((data) => fetchData(table.page + 1, table.rowsPerPage))
-      .catch((error) => console.error('Error:', error));
+      .then((data) => {fetchData(table.page + 1, table.rowsPerPage); setIsLoading(false);})
+      .catch((error) => {
+        console.error('Error:', error);
+        // Set loading to false even if there's an error
+        setIsLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -146,7 +186,8 @@ export function UserView() {
       </Box>
 
       <Card>
-        <UserTableToolbar numSelected={table.selected.length} />
+      {isLoading && <Loader />}
+      <UserTableToolbar numSelected={table.selected.length} />
 
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>

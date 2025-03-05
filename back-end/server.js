@@ -22,6 +22,13 @@ const locations = [
 let index = 0;
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Welcome to the Backend API", 
+    status: "Healthy",
+    timestamp: new Date().toISOString()
+  });
+});
 app.use('/api/users', userRoutes);
 app.get("/live-location", (req, res) => {
   const location = locations[index % locations.length];
@@ -39,3 +46,5 @@ mongoose.connect('mongodb+srv://chintan19:chintan1910@chintan.k5i9s.mongodb.net/
 // Start Server
 const PORT = 3333;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

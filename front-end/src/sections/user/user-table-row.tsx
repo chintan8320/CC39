@@ -32,7 +32,13 @@ type UserTableRowProps = {
   deleteData: (id: string) => void;
 };
 
-export function UserTableRow({ row, selected, onSelectRow, handleOpenModal, deleteData }: UserTableRowProps) {
+export function UserTableRow({
+  row,
+  selected,
+  onSelectRow,
+  handleOpenModal,
+  deleteData,
+}: UserTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -43,20 +49,19 @@ export function UserTableRow({ row, selected, onSelectRow, handleOpenModal, dele
     setOpenPopover(null);
   }, []);
 
-  const handleEdit = (line : UserProps) => {
-    handleClosePopover()
-    handleOpenModal(line)
-  }
+  const handleEdit = (line: UserProps) => {
+    handleClosePopover();
+    handleOpenModal(line);
+  };
 
-  const handleDelete = (key : string) => {
-    handleClosePopover()
-    deleteData(key)
-  }
+  const handleDelete = (key: string) => {
+    handleClosePopover();
+    deleteData(key);
+  };
 
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
-
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
             {row.name}
@@ -76,7 +81,16 @@ export function UserTableRow({ row, selected, onSelectRow, handleOpenModal, dele
         </TableCell>
 
         <TableCell>
-          <Label color={(row.status === 'banned' && 'error') || 'success'}>{row.status}</Label>
+          <Label
+            color={
+              (row.status === 'Active' && 'success') ||
+              (row.status === 'Inactive' && 'warning') ||
+              (row.status === 'Pending' && 'default') ||
+              'default'
+            }
+          >
+            {row.status}
+          </Label>
         </TableCell>
 
         <TableCell align="right">
