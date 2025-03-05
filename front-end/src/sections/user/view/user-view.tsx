@@ -24,6 +24,7 @@ import { emptyRows, applyFilter, getComparator, exportToExcel } from '../utils';
 
 import type { UserProps } from '../user-table-row';
 import { UserModal } from '../user-modal';
+import { LiveLocationModal } from '../live-location-modal';
 
 // ----------------------------------------------------------------------
 
@@ -34,6 +35,7 @@ export function UserView() {
   const [filterName, setFilterName] = useState('');
   const [openModal, setOpenModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProps | null>(null);
+  const [openLiveLocationModal, setOpenLiveLocationModal] = useState(false);
 
   const dataFiltered: UserProps[] = applyFilter({
     inputData: users,
@@ -132,6 +134,14 @@ export function UserView() {
           >
             Export as Excel
           </Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mdi:map-marker" />}
+            onClick={() => setOpenLiveLocationModal(true)}
+          >
+            Show live location
+          </Button>
         </Box>
       </Box>
 
@@ -200,6 +210,10 @@ export function UserView() {
         onClose={handleCloseModal}
         onSave={handleSaveUser}
         editingUser={editingUser}
+      />
+      <LiveLocationModal
+        open={openLiveLocationModal}
+        onClose={() => setOpenLiveLocationModal(false)}
       />
     </DashboardContent>
   );
