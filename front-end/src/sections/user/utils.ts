@@ -82,7 +82,7 @@ export function applyFilter({ inputData, comparator, filterName }: ApplyFilterPr
 
 export const exportToExcel = async () => {
   try {
-    const response = await fetch("http://localhost:3333/api/users");
+    const response = await fetch("https://cc39.onrender.com/api/users");
     const data = await response.json();
 
     if (!response.ok) {
